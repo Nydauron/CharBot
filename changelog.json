@@ -1,0 +1,36 @@
+[
+	{
+		"version":"1.0",
+		"features":
+			[
+				"Call roasts on demand!",
+				"Randomly roast someone on your command!",
+				"Can be summoned in regular conversation in order to roast."
+			],
+		"bugfixes": []
+	},
+	{
+		"version": "1.1",
+		"features":
+			[
+				"Added options!",
+				"Added the randomTimeInterval option which will roast someone random every 5-10 minutes",
+				"Improved messaging layout."
+			],
+		"bugfixes": []
+	},
+	{
+		"version":"1.2",
+		"features":
+			[
+				"Added the mentions options to prevent the bot from spamming the channels.",
+				"Changed randomTimeInvteral option so that it is now more customizable.",
+				"Added changelogs. (You wouldn't be able to see this if this wasn't here!)",
+				"Added reset settings command to mannually recreate the settings."
+			],
+		"bugfixes": 
+			[
+				"Bot joining and leaving servers and channels now generate the correct default settings."
+			]
+	}
+]
