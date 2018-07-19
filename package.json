@@ -1,0 +1,8 @@
+{
+  "name": "CharBot",
+  "version": "1.2.0",
+  "description": "A bot that roasts other people for your entertainment.",
+  "main": "app.js",
+  "author": "Nydauron",
+  "dependencies": {}
+}
