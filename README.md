@@ -27,7 +27,7 @@ Admin users (users with kick permissions) can also use the following commands:
 ### randomTimeInterval
 Creates an event that rolls a random number between 0 and 1 every interval. If the generated number is less than the probability number, it roasts a random user.
 
-By default, this is disabled. If it is enabled and no interval or proability number is given, then the bot will follow the default values which is 30 minute intervals and a 0.2 probability.
+By default, this is disabled. If it is enabled and no interval or probability number is given, then the bot will follow the default values which is 30-minute intervals and a 0.2 probability.
 
 ### mentions
 The bot will mention users when it messages a roast. Since there is no way to block direct mentions, this option can eliminate annoying notifications.
@@ -51,6 +51,6 @@ By default, this setting is disabled.
     - Added the mentions options to prevent the bot from spamming the channels.
     - Changed randomTimeInvteral option so that it is now more customizable.
     - Added changelogs. (You wouldn't be able to see this if this wasn't here!)
-    - Added reset settings command to mannually recreate the settings.
+    - Added reset settings command to manually recreate the settings.
   - Bugfixes
     - Bot joining and leaving servers and channels now generate the correct default settings.
