@@ -32,5 +32,22 @@
 			[
 				"Bot joining and leaving servers and channels now generate the correct default settings."
 			]
+	},
+	{
+		"version":"1.2.1",
+		"features": [],
+		"bugfixes": 
+			[
+				"\"!roast everyone\" now will roast everyone in the channel instead of everyone on the server. Pointless if the person being roasted can't see it!"
+			]
+	},
+	{
+		"version":"1.3",
+		"features": [],
+		"bugfixes": 
+			[
+				"Roasts are now stored locally on the bot which make roasting people faster than never! No more relying on the roast server going down and then me needing to fix it repeatively! Yay!",
+				"The bot now gets roasts from the server every 5 minutes instead of everytime when someone roasts. That way the server and the bot use less processing power."
+			]
 	}
 ]

@@ -1,3 +1,4 @@
+require("http").createServer(async (req,res) => { res.statusCode = 200; res.write("ok"); res.end(); }).listen(3000, () => console.log("Now listening on port 3000"));
 const Discord = require("discord.js");
 
 const client = new Discord.Client();
@@ -6,18 +7,130 @@ const config = require("./config.json");
 const guildSettings = require("./guildsettings.json");
 const changeLog = require("./changelog.json");
 const jsonfile = require("jsonfile");
+const http = require('http');
+const request = require('request');
 
 const $ = require("jquery")(require('jsdom-no-contextify').jsdom().parentWindow);
 
+const bfdAPI = require('bfd-js-api');
+const bfd = new bfdAPI(client, config.botsForDiscordToken, true, 900);
+const DBL = require("dblapi.js");
+const dbl = new DBL(config.discordBotsListToken, {statsInterval: 900000}, client);
+
+const https = require('https');
+
+const post = require('superagent');
 const listOfRoasts = config.roasts;
 
 const date = new Date();
 
 var settings;
+var roasts = require("./roasts.json");
+var activityInt = 1;
 
 var setTimeoutIDs = [];
 
 client.on("ready", () => {
+	//recreateSettings()
+	/*request(
+    {
+        url : "https://discord.bots.gg/api/v1/bots/444694580894498816/stats",
+		headers : {
+            "Authorization" : config.discordBotsGGToken
+        }
+    },
+    function (error, response, body) {
+        // Do more stuff with 'body' here
+		if(error != null)
+			console.log(error)
+		else{
+			console.log(response)
+			console.log(body)
+		}
+	}
+);
+	$.ajax({
+		url: "https://discord.bots.gg/api/v1/bots/444694580894498816/stats",
+		contentType: "application/json",
+		type: "POST",
+		headers: {
+			"Authorization": config.discordBotsGGToken
+		},
+		data: {"guildCount": client.guilds.size},
+		success: function(a) {
+			console.log("success")
+			console.log(a)
+		},
+		error: function(e) {
+			console.log(e);
+		}
+	});
+	
+
+      const response = {
+        raw: '',
+        body: null,
+        status: null,
+        headers: null,
+      };
+	var data = {guildCount: client.guilds.size};
+	var method = "post"
+      const options = {
+        hostname: 'https://discord.bots.gg/api/v1/bots/444694580894498816/stats',
+        path: '',
+        method: 'post',
+        headers: {},
+      };
+
+    if (this.token) {
+      options.headers.authorization = config.discordBotsGGToken;
+    } else {
+      console.warn('[dblapi.js] Warning: No DBL token has been provided.'); // eslint-disable-line no-console
+    }
+    if (data && method === 'post') options.headers['content-type'] = 'application/json';
+    if (data && method === 'get') options.path += `?${qs.encode(data)}`;
+
+    const request = https.request(options, res => {
+        response.status = res.statusCode;
+        response.headers = res.headers;
+        response.ok = res.statusCode >= 200 && res.statusCode < 300;
+        response.statusText = res.statusMessage;
+        res.on('data', chunk => {
+          response.raw += chunk;
+        });
+        res.on('end', () => {
+          response.body = res.headers['content-type'].includes('application/json') ? JSON.parse(response.raw) : response.raw;
+          if (response.ok) {
+            resolve(response);
+          } else {
+            const err = new Error(`${res.statusCode} ${res.statusMessage}`);
+            Object.assign(err, response);
+            reject(err);
+          }
+        });
+
+		request.on('error', err => {
+			reject(err);
+		});
+
+		if (data && method === 'post') request.write(JSON.stringify(data));
+		request.end();
+	  });*/
+	
+	/*$.ajax({
+		url: "https://mzz9x5fx61.execute-api.us-east-1.amazonaws.com/dev/shittalk/check-duplicate",
+		contentType: "application/json; charset=utf-8",
+		type: "POST",
+		dataType: "json",
+		data: JSON.stringify({submission: "fuck"}),
+		success: function(n) {
+			n.duplicate ? console.log("It is duplicate"): console.log("no duplicate")
+		},
+		error: function(e) {
+			console.error(e)
+		}
+	})*/
+	
 	console.log(`Bot has started, with ${client.users.size} users, in ${client.channels.size} channels of ${client.guilds.size} guilds.`); 
 	settings = guildSettings;
 	guilds = settings.guilds;
@@ -25,7 +138,6 @@ client.on("ready", () => {
 		var channelsArray = guilds[i].channels;
 		for(var j = 0; j < channelsArray.length; j++){
 			if(channelsArray[j].settings.randomTimeInterval.value === "enable"){
-				//console.log("FOUND ONE!");
 				var delay = parseInt(channelsArray[j].settings.randomTimeInterval.date) - Date.now();
 				const channelID = channelsArray[j].id;
 				var tempI = i;
@@ -58,8 +170,24 @@ client.on("ready", () => {
 			}
 		}
 	}
-    client.user.setActivity('you burn | V1.2 | !roast ?', {type: "WATCHING"});// <<<< CHANGE BACK TO THIS ONCE STABLE
-    console.log("Charbot v1.2 is completed boot! Awaiting commands...");
+	var ver = changeLog[changeLog.length - 1].version;
+	
+	updateRoasts();
+	setInterval(function (){updateRoasts()}, 5*1000*60);
+	
+	setInterval(function (){
+		activityInt++;
+		if(activityInt > 2)//<--------- CHANGE TO 3 ONCE WE GET A LOT OF SERVERS
+			activityInt = 1;
+		switch(activityInt){
+			case 1: client.user.setActivity('with fire | V' + ver , {type: "PLAYING"}); break;
+			case 2: client.user.setActivity('"!roast ?" for help', {type: "LISTENING"}); break;
+			case 3: client.user.setActivity('${client.users.size} plebs' , {type: "WATCHING"}); break;
+			default: break;
+		}
+	}, 20 * 1000);
+    client.user.setActivity('with fire | v' + ver , {type: "PLAYING"});
+    console.log("Charbot v" + ver + " is completed boot! Awaiting commands...");
 });
 
 client.on("guildCreate", guild => {
@@ -72,12 +200,13 @@ client.on("guildCreate", guild => {
   
     settings.guilds.push(guildObj);
   
-    var writeBuffer = JSON.stringify(settings);
+    /*var writeBuffer = JSON.stringify(settings);
 	var fs = require('fs');
 	fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
 		if (err) throw err;
 		console.log('added ' + guild.name + ' to guildsettings.json');
-	});
+	});*/
+	writeToFileCallback(settings, './guildsettings.json',  'added ' + guild.name + ' to guildsettings.json');
 });
 
 client.on("guildDelete", guild => {
@@ -90,30 +219,36 @@ client.on("guildDelete", guild => {
 	    }
     }
   
-	var writeBuffer = JSON.stringify(settings);
+	/*var writeBuffer = JSON.stringify(settings);
 	var fs = require('fs');
 	fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
 		if (err) throw err;
-		console.log('removed ' + guild.name + ' to guildsettings.json');
-	});
+		console.log('removed ' + guild.name + ' from guildsettings.json');
+	});*/
+	writeToFileCallback(settings, './guildsettings.json', 'removed ' + guild.name + ' from guildsettings.json');
 });
 
 client.on("channelCreate", channel => {
-    console.log(`I have been added to: ${channel.name} (id: ${channel.id})`);
-  
-    for(var i = 0; i < guilds.length; i++){
-		if(channel.guild.id === guilds[i].id){
-			settings.guilds[i].channels.push({id: channel.id, settings:{randomTimeInterval:{value:"disable", interval: 0, chance: 0, date: Date.now()}, mention: "disable"}});
-			break;
+    if(channel.type != 'dm'){
+		console.log(`I have been added to: ${channel.name} (id: ${channel.id})`);
+		for(var i = 0; i < guilds.length; i++){
+			console.log(channel)
+			if(channel.guild.id == undefined) break;
+			if(channel.guild.id === guilds[i].id){
+				settings.guilds[i].channels.push({id: channel.id, settings:{randomTimeInterval:{value:"disable", interval: 0, chance: 0, date: Date.now()}, mention: "disable"}});
+				break;
+			}
 		}
-    }
-  
-	var writeBuffer = JSON.stringify(settings);
-	var fs = require('fs');
-	fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
-		if (err) throw err;
-		console.log('added ' + channel.name + ' to guildsettings.json');
-	});
+	  
+		/*var writeBuffer = JSON.stringify(settings);
+		var fs = require('fs');
+		fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
+			if (err) throw err;
+			console.log('added ' + channel.name + ' to guildsettings.json');
+		});*/
+		
+		writeToFileCallback(settings, './guildsettings.json', 'added ' + channel.name + ' to guildsettings.json');
+	}
 });
 
 client.on("channelDelete", channel => {
@@ -132,73 +267,177 @@ client.on("channelDelete", channel => {
 		}
     }
   
-	var writeBuffer = JSON.stringify(settings);
+	/*var writeBuffer = JSON.stringify(settings);
 	var fs = require('fs');
 	fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
 		if (err) throw err;
 		console.log('removed ' + channel.name + ' to guildsettings.json');
-	});
+	});*/
+	writeToFileCallback(settings, './guildsettings.json', 'removed ' + channel.name + ' to guildsettings.json');
 });
 
-function getRoasts(channel, user, hasMentions){
+bfd.on('posted', (guildCount) => {
+    console.log(`Success! Posted ${guildCount} Guilds to botsfordiscord.com`);
+});
+bfd.on('error', (err) => {
+    console.log(`BFD has errored!\n${err}`);
+});
+
+dbl.on('posted', () => {
+  console.log('Success! Posted ${guildCount} Guilds to discordbots.org');
+})
+
+dbl.on('error', e => {
+ console.log(`DBL has errored!\n${e}`);
+})
+
+function recreateSettings(){
+	var guildCollection = client.guilds;
+	var listOfGuilds = [];
+	for (let key of guildCollection)
+		listOfGuilds.push(key);
+	console.log(listOfGuilds)
+	var guildsJSON = [];
+	
+	for(var i = 0; i < listOfGuilds.length; i++){
+		var guildObj = {id: listOfGuilds[i][0], channels: []};
+		var allChannels = listOfGuilds[i][1].channels.array();
+		for(var j = 0; j < allChannels.length; j++){
+			guildObj.channels.push({id: allChannels[j].id, settings:{randomTimeInterval:{value:"disable", interval: 0, chance: 0, date: Date.now()}, mention: "disable"}});
+		}
+		guildsJSON.push(guildObj);
+	}
+	
+	var writeBuffer = JSON.stringify(guildsJSON);
+	var fs = require('fs');
+	
+	fs.writeFile('./guildsettings.json.backup', writeBuffer, 'utf8', function(err) {
+		if (err) throw err;
+	});
+	
+	fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
+		if (err) throw err;
+	});
+}
+
+function writeToFileCallback(array, path, callback){
+	var writeBuffer = JSON.stringify(array);
+	var fs = require('fs');
+	
+	fs.writeFile(path, writeBuffer, 'utf8', function(err) {
+		if (err) throw err;
+		console.log(callback);
+	});
+}
+
+function writeToFile(array, path){
+	var writeBuffer = JSON.stringify(array);
+	var fs = require('fs');
+	
+	fs.writeFile(path, writeBuffer, 'utf8', function(err) {
+		if (err) throw err;
+	});
+}
+
+
+function updateRoasts(){
 	$.ajax({
-            url: "https://daviseford.com/shittalk/php/controller/controller.php",
-            contentType: "application/json; charset\x3dutf-8",
-            type: "POST",
+            url: "https://mzz9x5fx61.execute-api.us-east-1.amazonaws.com/dev/shittalk/all", //OLD LINK: https://daviseford.com/shittalk/php/controller/controller.php
+            contentType: "application/json; charset=utf-8",
+            type: "GET",
             dataType: "json",
-            data: JSON.stringify({
-                query: "get_RandomList"
-            }),
             success: function(a) {
-				var array = a;
+				array = a.data.random;
 				for(var i = 0; i < array.length; i++){
 					var item = array[i];
-					var voteCount = parseInt(item.netVotes);
-					var content = item.text || "";
-					
-					if(voteCount < 10){
-						array.splice(i, 1);
-						i--;
-					}
-				}
-				var roastMsg = array[0].text;
-				var embed = {
-					"title": roastMsg,
-					"color": 0xff0000
-				}
-				var guildID = channel.guild.id;
-				
-				if(hasMentions === "enable")
-					channel.send("<@" + user + ">", {embed});
-				else if(hasMentions === "disable"){
-					var clientMapUsers = client.guilds.get(guildID).members;
-					var listOfMembers = clientMapUsers.array();
-					var msgName = "";
-							
-					var userObj = clientMapUsers.get(user);
-							
-					if(user === userObj.user.id){
-						if(userObj.nickname == null){
-							msgName = userObj.user.username;
-						}else{
-							msgName = userObj.nickname;
+					var voteCount = item.net_votes;
+					if(voteCount < 10)
+						continue;
+					var content = item.submission || "";
+					var indexOfRepeat = binarySearch(roasts, content);
+					if(indexOfRepeat < 0){
+						for(var j = 0; j <= roasts.length; j++){
+							if(j == roasts.length){
+								roasts.push(item);
+								break;
+							}
+							else if(content.localeCompare(roasts[j].submission) < 0){
+								roasts.splice(j, 0, item);
+								break;
+							}
 						}
+					}else{
+						roasts[indexOfRepeat] = item;
 					}
-							
-					channel.send(msgName, {embed});
 				}
+				
+				writeToFileCallback(roasts, "./roasts.json", "Roast List Updated. Roast list has a size of " + roasts.length + ".");
 			},
-            error: function(a) {
+			error: function(a) {
                 console.log(a)
             }
-        });
+	});
+}
+
+function binarySearch(array, item){
+	var l = 0; 
+	var r = array.length - 1;
+	while (l <= r){ 
+		var m = l + (r - l) / 2;
+		
+		var res = item.localeCompare(array[Math.floor(m)].submission); 
+		if (res == 0) 
+			return m; 
+		if (res > 0) 
+			l = m + 1; 
+		else
+			r = m - 1; 
+	}
+	return -1; 
+}
+
+function getRoasts(channel, userid, hasMentions, isEveryone){
+	var roastMsg = roasts[Math.floor(Math.random() * roasts.length)].submission;
+	var embedMsg = {
+		"title": roastMsg,
+		"color": 0xff0000
+	}
+	var guildID = channel.guild.id;
+	if(isEveryone){
+		return embedMsg;
+	}else{
+		if(hasMentions === "enable")
+			channel.send("<@" + userid + ">", {embed: embedMsg});
+		else if(hasMentions === "disable"){
+			var clientMapUsers = client.guilds.get(guildID).members;
+			var listOfMembers = clientMapUsers.array();
+			var msgName = "";
+					
+			var userObj = clientMapUsers.get(userid);
+			
+			if(userid === userObj.user.id){
+				if(userObj.nickname == null){
+					msgName = userObj.user.username;
+				}else{
+					msgName = userObj.nickname;
+				}
+			}
+					
+			channel.send(msgName, {embed: embedMsg});
+		}
+	}
 }
 
 client.on("message", async message => {
 	var hasMentions = "disable";
+	var hasRoastEveryone = "disable";
 	
 	var foundGuild = false;
 	var foundChannel = false;
+	
+	if(message.author.bot) return;
+	if(message.channel.type == 'dm') return;
+	
 	for(i = 0; i < settings.guilds.length; i++){
 		if(message.guild.id === settings.guilds[i].id){
 			foundGuild = true;
@@ -206,6 +445,7 @@ client.on("message", async message => {
 				if(message.channel.id === settings.guilds[i].channels[j].id){
 					foundChannel = true;
 					hasMentions = settings.guilds[i].channels[j].settings.mention;
+					hasRoastEveryone = settings.guilds[i].channels[j].settings.roastEveryone;
 					break;
 				}
 			}
@@ -220,8 +460,6 @@ client.on("message", async message => {
 	if(!foundChannel){
 		resetChannelSettings(message.channel.id);
 	}
-
-	if(message.author.bot) return;
 	
 	//Blacklist filter
 	//for(i = 0; i < config.blacklist.length; i++){
@@ -241,6 +479,7 @@ client.on("message", async message => {
 	//}
 	
 	//console.log(message.author.username + "#" + message.author.discriminator + ": " + message.content);
+	//console.log("[" + message.guild.name + "]  " + message.author.username + "#" + message.author.discriminator + ": " + message.content);
 	
 	if(message.content.indexOf(config.prefix) !== 0){
 		const args = message.content.split(" ");
@@ -269,15 +508,23 @@ client.on("message", async message => {
 			
 			if(tempString === 'roast' && i + 1 !== args.length){
 				const IDLENGTH = 18;
-				if(args[i + 1] === "<@" + config.id + ">"){
+				if(args[i + 1] === "<@" + config.id + ">" || args[i + 1] === "yourself"){
 					roast(message.channel.id, config.id, message.author.id, hasMentions);
 					hasResponded = true;
-				}else if(args[i + 1] === "everyone" || args[i + 1] === "random"){
+				}else if(args[i + 1].toLowerCase() === "me"){
+					if(botMentioned)
+						message.channel.send("Got it! One well done <@" + message.author.id + ">...");
+					roast(message.channel.id, message.author.id, message.author.id, hasMentions);
+					hasResponded = true;
+				}else if((args[i + 1].toLowerCase() === "everyone" && hasRoastEveryone === "enable") || args[i + 1].toLowerCase() === "random"){
 					if(args[i + 1] === "random" && botMentioned)
 						message.channel.send("As you wish, <@" + message.author.id + ">.");
 					roast(message.channel.id, args[i + 1],	message.author.id, hasMentions);
 					hasResponded = true;
-				}else if((args[i + 1].indexOf("<@") == 0 && args[i + 1].indexOf(">") == args[i + 1].length - 1)){ //18 characters SHOULD be the id length. Otherwise, IDLENGTH + 2
+				}else if(args[i + 1].toLowerCase() === "everyone" && hasRoastEveryone === "disable"){
+					message.channel.send("Unfortunately, I am not allowed to spam this channel with roasts.");
+					hasResponded = true;
+				}else if((args[i + 1].toLowerCase().indexOf("<@") == 0 && args[i + 1].toLowerCase().indexOf(">") == args[i + 1].length - 1)){ //18 characters SHOULD be the id length. Otherwise, IDLENGTH + 2
 					if(botMentioned)
 						message.channel.send("As you wish, <@" + message.author.id + ">.");
 					var startSubIndex = 2;
@@ -286,20 +533,30 @@ client.on("message", async message => {
 					roast(message.channel.id, args[i + 1].substring(startSubIndex, args[i + 1].length - 1), message.author.id, hasMentions);
 					hasResponded = true;
 				}
+				console.log("[" + message.guild.name + "]  " + message.author.username + "#" + message.author.discriminator + ": " + message.content);
 			}
 			if((tempString === 'help' || tempString === '?') && botMentioned){
 				message.channel.send("Some assistance for you <@" + message.author.id + ">.");
 				help(message);
 				hasResponded = true;
 			}
+			for(var j = 0; j < config.greetings.length; j++){
+				if(message.content.toLowerCase().indexOf(config.greetings[j]) != -1 && botMentioned){
+					message.channel.send("<@" + message.author.id + "> I roast people for a living...");
+					hasResponded = true;
+				}
+			}
+			if(hasResponded)
+				break;
 		}
 		
-		if(!hasResponded && botMentioned)
+		if(!hasResponded && botMentioned){
 			message.channel.send("<@" + message.author.id + ">! You summoned me! What is it that you request?");
-		
+			console.log("[" + message.guild.name + "]  " + message.author.username + "#" + message.author.discriminator + ": " + message.content);
+		}
 		return;
 	}
-
+	console.log("[" + message.guild.name + "]  " + message.author.username + "#" + message.author.discriminator + ": " + message.content);
     const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
   
@@ -311,9 +568,11 @@ client.on("message", async message => {
 	    if(command.substring(0, 3) == "<@!")
 		    startSubIndex = 3;
 	    roast(message.channel.id, command.substring(startSubIndex,command.length - 1), message.author.id, hasMentions);
-    }else if(command === "everyone" || command === "random"){
+    }else if((command === "everyone" && hasRoastEveryone === "enable") || command === "random"){
 		roast(message.channel.id, command, message.author.id, hasMentions);
-    }
+    }else if((command === "everyone" && hasRoastEveryone === "disable")){
+		message.channel.send("Unfortunately, I am not allowed to spam this channel with roasts.");
+	}
     if(command === "changelog"){
 	    requestChangelog(message);
     }
@@ -330,12 +589,21 @@ client.on("message", async message => {
 								settingsHelp(message, i, j);
 							}else if(args[0] === "randomTimeInterval"){
 								if(args.length == 1){
-								//<-------------------REUTRN RANDOMTIMEINTERVAL VALUE, TIME, AND CHANCE
-								
+									if(channels[j].settings.randomTimeInterval.value === "enable"){
+										plural = "s";
+										if(channels[j].settings.randomTimeInterval.interval == 1)
+											plural = "";
+										message.channel.send("Intervals are set to " + channels[j].settings.randomTimeInterval.interval + " minute"+ plural +" with a " + (channels[j].settings.randomTimeInterval.chance * 100) + "% chance of roasting someone.");
+									}else
+										message.channel.send("Random interval roasting is disabled.");
 								}else{
 									//!roast settings randomTimeInterval disable
 									//!roast settings randomTimeInterval enable <timeIntervalToCheck> <chanceofRoast>
-									
+									switch(args[1]){
+										case "1": args[1] = "enable"; break;
+										case "0": args[1] = "disable"; break;
+										default: break;
+									}
 									if(args[1] === "disable" || args[1] === "enable"){
 										var validCommand = true;
 										var prevValue = channels[j].settings.randomTimeInterval.value;
@@ -375,11 +643,12 @@ client.on("message", async message => {
 												message.channel.send("randomTimeInterval is now " + args[1] + "d.");
 											}
 											
-											var writeBuffer = JSON.stringify(settings);
+											/*var writeBuffer = JSON.stringify(settings);
 											var fs = require('fs');
 											fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
 												if (err) throw err;
-											});
+											});*/
+											writeToFile(settings,'./guildsettings.json');
 										}
 									}
 								}
@@ -400,18 +669,50 @@ client.on("message", async message => {
 									}
 								}
 							}else if(args[0] === "mentions"){
-								if(args[1] === "enable" || args[1] === "disable"){
-									var prevMention = channels[j].settings.mention;
-									channels[j].settings.mention = args[1];
-									if(args[1] === prevMention){
-										message.channel.send("Mentions are already been " + args[1] + "d for the channel.");
-									}else{
-										message.channel.send("Mentions have been " + args[1] + "d for the channel.");
-									}
-									
-									updateSettingsJson();
+								if(args.length == 1){
+									message.channel.send("Mentions are " + channels[j].settings.mention + "d.");
 								}else{
-									message.channel.send("The arguments here are to \"enable\" or to \"disable\", not \"" + args[1] + "\".");
+									switch(args[1]){
+										case "1": args[1] = "enable"; break;
+										case "0": args[1] = "disable"; break;
+										default: break;
+									}
+									if(args[1] === "enable" || args[1] === "disable"){
+										var prevMention = channels[j].settings.mention;
+										channels[j].settings.mention = args[1];
+										if(args[1] === prevMention){
+											message.channel.send("Mentions are already " + args[1] + "d for this channel.");
+										}else{
+											message.channel.send("Mentions have been " + args[1] + "d for this channel.");
+										}
+										
+										updateSettingsJson();
+									}else{
+										message.channel.send("The arguments here are to \"enable\" or to \"disable\", not \"" + args[1] + "\".");
+									}
+								}
+							}else if(args[0] === "roastEveryone"){//add roastEveryone to settings first!!!!!!!! DONE
+								if(args.length == 1){
+									message.channel.send("roastEveryone is " + channels[j].settings.roastEveryone + "d.");
+								}else{
+									switch(args[1]){
+										case "1": args[1] = "enable"; break;
+										case "0": args[1] = "disable"; break;
+										default: break;
+									}
+									if(args[1] === "enable" || args[1] === "disable"){
+										var prevMention = channels[j].settings.roastEveryone;
+										channels[j].settings.roastEveryone = args[1];
+										if(args[1] === prevMention){
+											message.channel.send("roastEveryone is already " + args[1] + "d for this channel.");
+										}else{
+											message.channel.send("roastEveryone has been " + args[1] + "d for this channel.");
+										}
+										
+										updateSettingsJson();
+									}else{
+										message.channel.send("The arguments here are to \"enable\" or to \"disable\", not \"" + args[1] + "\".");
+									}
 								}
 							}
 							break;
@@ -445,16 +746,15 @@ client.on('messageReactionAdd', (reaction, user) => {
 function roast(channelID, user, author, hasMentions){
 	var msgChannel = client.channels.get(channelID);
 	var memberCount = msgChannel.guild.memberCount;
-	var clientMapUsers = msgChannel.guild.members;
+	var clientMapUsers = msgChannel.members;
 	
 	var listOfMembers = [];
 	for (let key of clientMapUsers)
 		listOfMembers.push(key);
 
-	//var roastIntros = config.roastIntros;
 	if(user === config.id){
 		msgChannel.send("Why would I roast myself <@" + author + ">? lol");
-		getRoasts(msgChannel, author, hasMentions);
+		getRoasts(msgChannel, author, hasMentions, false);
 	}else{
 		if(user === "randomInterval"){
 			
@@ -462,29 +762,39 @@ function roast(channelID, user, author, hasMentions){
 			do{
 				randomUser = listOfMembers[Math.floor(Math.random() * listOfMembers.length)][0]
 			}while(randomUser === config.id);
-			getRoasts(msgChannel, randomUser, hasMentions);
+			getRoasts(msgChannel, randomUser, hasMentions, false);
 		}else{
-			//msgChannel.send(roastIntros[Math.floor(Math.random() * roastIntros.length)]);
 			if(user === "random"){
 				var randomUser;
 				do{
 					randomUser = listOfMembers[Math.floor(Math.random() * listOfMembers.length)][0]
 				}while(randomUser === config.id);
 				
-				getRoasts(msgChannel, randomUser, hasMentions);
+				getRoasts(msgChannel, randomUser, hasMentions, false);
 			}else if(user === "everyone"){
-				msgChannel.send("<@" + author + "> has summoned an avalanche of dead bodies.");
-				
-				var memberCounter = 0;
-				for(var i = 0; i < listOfMembers.length; i++){
-					if(listOfMembers[i][0] !== config.id && listOfMembers[i][0] !== "1"){ //ignores own name and clyde "the discord owned bot"
-						getRoasts(msgChannel, listOfMembers[i][0], hasMentions);
-						memberCounter++;
+				/*var allowsRoastEveryone = false;
+				for(var i = 0; i < channels.){
+					if(channels[i].settings.roastEveryone){
+						if(channels[i].settings.roastEveryone === "enable")
+							allowsRoastEveryone = true;
+						break;
 					}
 				}
-				msgChannel.send("Castualties: " + memberCounter);
+				if(allowsRoastEveryone){*/
+					msgChannel.send("<@" + author + "> has summoned an avalanche of dead bodies.");
+					
+					var memberCounter = 0;
+					var listOfEmbeds = [];
+					for(var i = 0; i < listOfMembers.length; i++){
+						if(listOfMembers[i][0] !== config.id && listOfMembers[i][0] !== "1"){ //ignores own name and clyde "the discord owned bot" 
+							getRoasts(msgChannel, listOfMembers[i][0], hasMentions, false);
+							memberCounter++;
+						}
+					}
+					msgChannel.send("Castualties: " + memberCounter);
+				//}
 			}else{
-				getRoasts(msgChannel, user, hasMentions);
+				getRoasts(msgChannel, user, hasMentions, false);
 			}
 		}
 	}
@@ -497,7 +807,7 @@ function generateRoast(){
 
 function help(message){
 	var embed;
-	if(message.member.hasPermission("KICK_MEMBERS")){
+	if(message.member.hasPermission("KICK_MEMBERS") || message.member.id == config.owner){
 		embed = {
 			"title": "THE ADMIN COMMANDS",
 			"description": "All these commands can be used in casual conversation. Just mention me and I will come to your service.",
@@ -512,8 +822,8 @@ function help(message){
 					"value": "Brings up this list of commands."
 				},
 				{
-					"name": "!roast settings",
-					"value": "Brings up this list of settings. MUST HAVE KICK PERMISSION."
+					"name": "!roast settings <settingName> [value]",
+					"value": "Brings up this list of settings and is used to edit setting values. MUST HAVE KICK PERMISSION."
 				},
 				{
 					"name": "!roast changelog",
@@ -563,6 +873,10 @@ function settingsHelp(message, guildIndex, channelIndex){
 			{
 				"name": "mentions = " + settings.guilds[guildIndex].channels[channelIndex].settings.mention + "d",
 				"value": "Allows the bot to mention other users on server. Can be really annoying if spammed. (Channel Setting)"
+			},
+			{
+				"name": "roastEveryone = " + settings.guilds[guildIndex].channels[channelIndex].settings.roastEveryone + "d",
+				"value": "Allows the bot to roast everyone on command. Can be amusing, but will spam a lot. (Channel Setting)"
 			}
 		]
 	};
@@ -582,6 +896,10 @@ function randomIntervalRoast(channelID, i, j, hasMentions){
 						
 	var writeBuffer = JSON.stringify(settings);
 	var fs = require('fs');
+	fs.writeFile('./guildsettings.json.backup', writeBuffer, 'utf8', function(err) {
+		if (err) throw err;
+	});
+	
 	fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
 		if (err) throw err;
 	});
@@ -650,16 +968,14 @@ function resetChannelSettings(channelID){
 }
 
 function updateSettingsJson(){
-	
-	
-	
-	var writeBuffer = JSON.stringify(settings);
+	/*var writeBuffer = JSON.stringify(settings);
 	var fs = require('fs');
 	fs.writeFile('./guildsettings.json', writeBuffer, 'utf8', function(err) {
 		if (err) 
 			throw err;
 		console.log('updated guildsettings.json');
-	});
+	});*/
+	writeToFileCallback(settings, './guildsettings.json', 'updated guildsettings.json');
 }
 
 function requestChangelog(message){
@@ -667,14 +983,16 @@ function requestChangelog(message){
 	
 	for(var i = 0; i < changeLog.length; i++){
 		var fieldObj = {name: "_**Version " + changeLog[i].version + "**_", value: ""};
-		fieldObj.value += "__**Features & Changes**__\n";
-		for(var j = 0; j < changeLog[i].features.length; j++){
-			fieldObj.value += changeLog[i].features[j] + "\n";
+		if(changeLog[i].features.length > 0){
+			fieldObj.value += "__**Features & Changes**__\n";
+			for(var j = 0; j < changeLog[i].features.length; j++){
+				fieldObj.value += " - " + changeLog[i].features[j] + "\n";
+			}
 		}
 		if(changeLog[i].bugfixes.length > 0){
 			fieldObj.value += "\n__**Bug Fixes**__\n";
 			for(var j = 0; j < changeLog[i].bugfixes.length; j++){
-				fieldObj.value += changeLog[i].bugfixes[j] + "\n";
+				fieldObj.value += " - " + changeLog[i].bugfixes[j] + "\n";
 			}
 		}
 		fieldObj.value += "\n";
@@ -688,7 +1006,7 @@ function requestChangelog(message){
 		"footer": {
 			"text": "Nydauron"
 		},
-		"timestamp": "2018-06-21T07:20:05.994Z" //<==== UPDATE THIS DATE AFTER AN UPDATE
+		"timestamp": "2019-04-20T18:39:56.004Z" //<==== UPDATE THIS DATE AFTER AN UPDATE
 	}
 	message.channel.send({embed});
 }

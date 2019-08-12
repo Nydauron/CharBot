@@ -6,8 +6,8 @@ Regular users can use the following commands:
 
 - !roast help - Displays all the commands the user can enter
 - !roast <@user> - Roasts the user mentioned
-- !roast random - Roasts a random user on the server
-- !roast everyone - Roasts every single user on the server (Note: May take a while to finish if there are several people on a server)
+- !roast random - Roasts a random user on the channel
+- !roast everyone - Roasts every single user on the channel (Note: May take a while to finish if there are several people on a channel)
 
 CharBot will roast someone automatically if you put roast before the mentioned user.
 
@@ -54,3 +54,10 @@ By default, this setting is disabled.
     - Added reset settings command to manually recreate the settings.
   - Bugfixes
     - Bot joining and leaving servers and channels now generate the correct default settings.
+- v1.2.1
+  - Bugfixes
+    - "!roast everyone" now will roast everyone in the channel instead everyone on the server. Pointless if the person being roasted can't see it!
+- v1.3
+  - Bugfixes
+    - Roasts are now stored locally on the bot which make roasting people faster than never! No more relying on the roast server going down and then me needing to fix it repeatively! Yay!
+	- The bot now gets roasts from the server every 5 minutes instead of everytime when someone roasts. That way the server and the bot use less processing power.
