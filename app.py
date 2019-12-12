@@ -1,8 +1,11 @@
 import discord
 import json
+import threading
 from config import Config
+from settings import Settings
 
 config = Config("config.json")
+settings = Settings("settings.pkl")
 
 class MyClient(discord.Client):
     async def on_ready(self):
@@ -13,3 +16,11 @@ class MyClient(discord.Client):
 
 client = MyClient()
 client.run(config.getToken())
+
+def set_interval(func, sec):
+    def func_wrapper():
+        set_interval(func, sec)
+        func()
+    t = threading.Timer(sec, func_wrapper)
+    t.start()
+    return t
