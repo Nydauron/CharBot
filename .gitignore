@@ -59,12 +59,5 @@ typings/
 
 # next.js build output
 .next
-backup/app.js.backup
-backup/app.js.backup1
-backup/app.js.backup2
 config.json
-guildsettingsbackup6-22-18.json
-New Text Document.txt
-Shit Talk Roasts.url
-shittalk.cfg
-start.bat
+settings.pkl
