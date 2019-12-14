@@ -21,7 +21,7 @@ class MyClient(discord.Client):
         #     boot up will rebuild the settings WHILE maintaining integrity of the data previously stored
         print('I joined a guild!')
         if not settings.does_guild_have_existing_settings(guild):
-            settings.generate_default_settings(guild)
+            settings.generate_guild_default_settings(guild)
 
     async def on_guild_remove(self, guild):
         # I am deciding to KEEP the settings stored instead of deleting them in the event the bot gets removed and then
@@ -30,8 +30,13 @@ class MyClient(discord.Client):
 
     async def on_guild_channel_create(self, channel):
         print(channel)
-        if not settings.does_guild_have_existing_settings(channel.guild):
-            settings.generate_default_settings(channel.guild)
+        # if not settings.does_guild_have_existing_settings(channel.guild):
+        #     settings.generate_guild_default_settings(channel.guild)
+        settings.generate_channel_default_settings(channel.guild.id, channel)
+
+    async def on_guild_channel_delete(self, channel):
+        settings.delete_channel_settings(channel.guild.id, channel)
+        print('Bot was removed from channel ' + channel.name + '.')
 
 client = MyClient()
 client.run(config.getToken())
