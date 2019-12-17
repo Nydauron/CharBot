@@ -12,6 +12,8 @@ class MyClient(discord.Client):
         print('Logged on as {0}!'.format(self.user))
 
     async def on_message(self, message):
+        if message.author == self.user:
+            return
         print('Message from {0.author}: {0.content}'.format(message))
 
     async def on_guild_join(self, guild):
@@ -37,6 +39,14 @@ class MyClient(discord.Client):
     async def on_guild_channel_delete(self, channel):
         settings.delete_channel_settings(channel.guild.id, channel)
         print('Bot was removed from channel ' + channel.name + '.')
+
+    async def on_raw_reaction_add(self, payload):
+        channel_id = payload.channel_id
+        channel = MyClient.get_channel(self, channel_id)
+        msg = await channel.fetch_message(payload.message_id)
+        if msg.author == self.user:
+            print('Thanks for reacting to me!')
+            print(msg.content)
 
 client = MyClient()
 client.run(config.getToken())
