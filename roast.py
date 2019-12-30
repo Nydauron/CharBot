@@ -1,9 +1,23 @@
 class Roast:
-    def __init__(self, roast_msg, user):
+    # def __init__(self, roast_msg, user, timestamp, upvote, downvote): # Used for transferring roasts
+    #     self.__roast_msg = roast_msg
+    #     self.__user = user
+    #     self.__timestamp = timestamp
+    #     self.__down_vote = downvote
+    #     self.__up_vote = upvote
+
+    def __init__(self, roast_msg, user, timestamp):
         self.__roast_msg = roast_msg
         self.__user = user
+        self.__timestamp = timestamp
         self.__down_vote = 0
         self.__up_vote = 0
+
+    # Should this identifier (messageid) be used to represent roasts that have already been added?
+    # aka If the submission is the same, then don't add the new roast
+    def __hash__(self):
+        return hash(self.__roast_msg)
+
 
     # For voting, in order to prevent spamming and possible manipulation, we need to limit the amount of voting to be
     # 1 vote per 24 hrs per roast
