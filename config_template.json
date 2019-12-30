@@ -1,3 +1,5 @@
 {
-  "token": "paste in your token here"
+  "token": "paste in your token here",
+  "prefix": "!roast",
+  "keyword": "roast"
 }
