@@ -1,0 +1,2 @@
+class NotAUserException(Exception):
+    pass
